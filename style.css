@@ -1,0 +1,359 @@
+:root {
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --bg-main: #0f172a;
+    --bg-card: rgba(30, 41, 59, 0.7);
+    --bg-glass: rgba(255, 255, 255, 0.05);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: rgba(255, 255, 255, 0.1);
+    --radius: 16px;
+    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+    /* Status Colors */
+    --status-not-started: #94a3b8;
+    --status-in-progress: #f59e0b;
+    --status-done: #10b981;
+    --status-postponed: #8b5cf6;
+
+    /* Priority Colors */
+    --prio-1: #ef4444;
+    --prio-2: #f97316;
+    --prio-3: #fbbf24;
+    --prio-4: #3b82f6;
+    --prio-5: #6366f1;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+    background-attachment: fixed;
+    color: var(--text-main);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* Glassmorphism Classes */
+.glass {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.app-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 0;
+}
+
+.logo {
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: -0.025em;
+    background: linear-gradient(to right, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+}
+
+nav {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 2rem;
+    position: sticky;
+    top: 1rem;
+    z-index: 10;
+}
+
+nav button {
+    flex: 1;
+    padding: 0.875rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+nav button.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
+}
+
+/* Tasks */
+.date-selector {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.input-group {
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.input-group input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 1rem;
+    color: white;
+    outline: none;
+    font-size: 1rem;
+}
+
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.task-card {
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all 0.2s ease;
+}
+
+.task-card:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.task-card.done {
+    opacity: 0.6;
+}
+
+.task-main {
+    flex: 1;
+    cursor: pointer;
+}
+
+.task-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.task-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8rem;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.btn-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 100;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 500px;
+    border: 1px solid var(--border);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+select,
+input,
+textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Dashboard */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    padding: 2rem;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(to bottom, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.chart-container {
+    padding: 2rem;
+    height: 350px;
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+/* PRINT TABLE STYLES */
+#printTable {
+    display: none;
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 2rem;
+}
+
+#printTable th,
+#printTable td {
+    border: 1px solid #000;
+    padding: 10px;
+    text-align: left;
+}
+
+#printTable th {
+    background: #f0f0f0;
+}
+
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    nav,
+    .input-group,
+    .date-selector,
+    #printBtn,
+    .no-print,
+    .modal,
+    .btn-icon {
+        display: none !important;
+    }
+
+    .glass {
+        background: none !important;
+        backdrop-filter: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .app-container {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .logo {
+        -webkit-text-fill-color: black;
+        border-bottom: 2px solid #000;
+        margin-bottom: 1rem;
+    }
+
+    #taskList {
+        display: none !important;
+    }
+
+    #printTable {
+        display: table !important;
+    }
+
+    .print-footer {
+        display: block !important;
+        margin-top: 30px;
+        page-break-inside: avoid;
+    }
+}
+
+.hidden {
+    display: none !important;
+}
