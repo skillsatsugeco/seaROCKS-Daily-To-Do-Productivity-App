@@ -1,359 +1,192 @@
-:root {
-    --primary: #3b82f6;
-    --primary-hover: #2563eb;
-    --bg-main: #0f172a;
-    --bg-card: rgba(30, 41, 59, 0.7);
-    --bg-glass: rgba(255, 255, 255, 0.05);
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --border: rgba(255, 255, 255, 0.1);
-    --radius: 16px;
-    --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+<!DOCTYPE html>
+<html lang="en">
 
-    /* Status Colors */
-    --status-not-started: #94a3b8;
-    --status-in-progress: #f59e0b;
-    --status-done: #10b981;
-    --status-postponed: #8b5cf6;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>seaROCKS | Daily Productivity</title>
+    <meta name="description"
+        content="Plan daily tasks, track productivity metrics, and manage your personal/farm ops with seaROCKS.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
 
-    /* Priority Colors */
-    --prio-1: #ef4444;
-    --prio-2: #f97316;
-    --prio-3: #fbbf24;
-    --prio-4: #3b82f6;
-    --prio-5: #6366f1;
-}
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">seaROCKS</div>
+            <button class="btn-icon" id="printBtn" title="Print today's list">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9V2h12v7"></path>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+            </button>
+        </header>
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
+        <nav id="mainNav" class="glass">
+            <button class="active" data-view="today">Tasks</button>
+            <button data-view="dashboard">Dashboard</button>
+            <button data-view="settings">Settings</button>
+        </nav>
 
-body {
-    background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
-    background-attachment: fixed;
-    color: var(--text-main);
-    line-height: 1.5;
-    min-height: 100vh;
-}
+        <!-- Tasks View -->
+        <main id="view-today">
+            <div class="date-selector no-print">
+                <input type="date" id="dateInput" class="glass">
+                <h2 id="displayDateText">Today</h2>
+            </div>
 
-/* Glassmorphism Classes */
-.glass {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-}
+            <div class="input-group glass no-print">
+                <input type="text" id="quickTaskInput" placeholder="Add a quick task...">
+                <button class="btn-icon" id="quickAddBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
 
-.app-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 1rem;
-}
+            <div id="taskList" class="task-list">
+                <!-- Tasks will be injected here -->
+            </div>
 
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2rem 0;
-}
+            <!-- Print Table (Hidden by default, shown via CSS in print) -->
+            <table id="printTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Task Title</th>
+                        <th>Objective</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody id="printTableBody"></tbody>
+            </table>
 
-.logo {
-    font-size: 1.75rem;
-    font-weight: 900;
-    letter-spacing: -0.025em;
-    background: linear-gradient(to right, #60a5fa, #a78bfa);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-transform: uppercase;
-}
+            <!-- Print specific footer -->
+            <div class="print-only print-footer hidden">
+                <p>Notes / Desk Review Comments:</p>
+                <div style="height: 100px; border-bottom: 1px dashed #ccc;"></div>
+                <div style="margin-top: 2rem; display: flex; justify-content: space-between;">
+                    <span>Signature: _______________________</span>
+                    <span>Date: _______________________</span>
+                </div>
+            </div>
+        </main>
 
-nav {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    margin-bottom: 2rem;
-    position: sticky;
-    top: 1rem;
-    z-index: 10;
-}
+        <!-- Dashboard View -->
+        <main id="view-dashboard" class="hidden">
+            <div class="metrics-grid">
+                <div class="metric-card glass">
+                    <span class="metric-value" id="metric-done">0</span>
+                    <span class="text-muted">Completed Today</span>
+                </div>
+                <div class="metric-card glass">
+                    <span class="metric-value" id="metric-score">0%</span>
+                    <span class="text-muted">Productivity Score</span>
+                </div>
+            </div>
 
-nav button {
-    flex: 1;
-    padding: 0.875rem;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font-weight: 600;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+            <div class="chart-container glass" style="padding: 1.5rem;">
+                <h3 style="margin-bottom: 1rem;">Activity Performance</h3>
+                <canvas id="productivityChart"></canvas>
+            </div>
+        </main>
 
-nav button.active {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5);
-}
+        <!-- Settings View -->
+        <main id="view-settings" class="hidden">
+            <div class="modal-content glass" style="margin: 0 auto; backdrop-filter: none; background: var(--bg-card);">
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="setting-name" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label>Email for Daily Summary</label>
+                    <input type="email" id="setting-email" placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Closing Time (Summary notification)</label>
+                    <input type="time" id="setting-time">
+                </div>
+                <div class="form-group">
+                    <label>Timezone</label>
+                    <select id="setting-timezone">
+                        <option value="GMT+3">East Africa (GMT+3)</option>
+                        <option value="GMT">UTC (GMT)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Default Categories (Comma separated)</label>
+                    <input type="text" id="setting-categories">
+                </div>
+                <button class="btn-primary" id="saveSettingsBtn">Save Settings</button>
+            </div>
+        </main>
 
-/* Tasks */
-.date-selector {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
+        <!-- Task Edit/Add Modal -->
+        <div class="modal" id="taskModal">
+            <div class="modal-content">
+                <h3 id="modalTitle">Edit Task</h3>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="taskTitle">
+                </div>
+                <div class="form-group">
+                    <label>Objective / Purpose</label>
+                    <input type="text" id="taskObjective" placeholder="What do you want to achieve?">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="taskCategory"></select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="taskPriority">
+                        <option value="1">1 - Urgent / High</option>
+                        <option value="2">2 - Important</option>
+                        <option value="3" selected>3 - Normal</option>
+                        <option value="4">4 - Low</option>
+                        <option value="5">5 - Backlog</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="taskNotes" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <button class="btn-primary" id="saveTaskBtn">Save</button>
+                    <button class="btn-primary" style="background: var(--text-muted);"
+                        onclick="closeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
 
-.input-group {
-    padding: 0.5rem;
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 2rem;
-}
+        <!-- Postpone Modal -->
+        <div class="modal" id="postponeModal">
+            <div class="modal-content">
+                <h3>Postpone Task</h3>
+                <p id="postponeTaskTitle" style="margin-bottom: 1rem; color: var(--text-muted);"></p>
+                <div class="form-group">
+                    <label>Move to Date</label>
+                    <input type="date" id="postponeDate">
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn-primary" id="confirmPostpone">Postpone</button>
+                    <button class="btn-primary" style="background: var(--text-muted);"
+                        onclick="closeModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-.input-group input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    padding: 1rem;
-    color: white;
-    outline: none;
-    font-size: 1rem;
-}
+    <script src="script.js"></script>
+</body>
 
-.task-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.task-card {
-    padding: 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    transition: all 0.2s ease;
-}
-
-.task-card:hover {
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(30, 41, 59, 0.9);
-}
-
-.task-card.done {
-    opacity: 0.6;
-}
-
-.task-main {
-    flex: 1;
-    cursor: pointer;
-}
-
-.task-title {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-}
-
-.task-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    font-size: 0.8rem;
-}
-
-.badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 6px;
-    text-transform: uppercase;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-.btn-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.btn-icon:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-}
-
-/* Modal */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(8px);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    z-index: 100;
-}
-
-.modal.active {
-    display: flex;
-}
-
-.modal-content {
-    background: #1e293b;
-    padding: 2rem;
-    border-radius: var(--radius);
-    width: 100%;
-    max-width: 500px;
-    border: 1px solid var(--border);
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-}
-
-select,
-input,
-textarea {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
-}
-
-.btn-primary {
-    background: var(--primary);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-}
-
-/* Dashboard */
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.metric-card {
-    padding: 2rem;
-    text-align: center;
-}
-
-.metric-value {
-    font-size: 2.5rem;
-    font-weight: 800;
-    background: linear-gradient(to bottom, #fff, #94a3b8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.chart-container {
-    padding: 2rem;
-    height: 350px;
-    position: relative;
-    margin-bottom: 2rem;
-}
-
-/* PRINT TABLE STYLES */
-#printTable {
-    display: none;
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 2rem;
-}
-
-#printTable th,
-#printTable td {
-    border: 1px solid #000;
-    padding: 10px;
-    text-align: left;
-}
-
-#printTable th {
-    background: #f0f0f0;
-}
-
-@media print {
-    body {
-        background: white !important;
-        color: black !important;
-    }
-
-    nav,
-    .input-group,
-    .date-selector,
-    #printBtn,
-    .no-print,
-    .modal,
-    .btn-icon {
-        display: none !important;
-    }
-
-    .glass {
-        background: none !important;
-        backdrop-filter: none !important;
-        border: none !important;
-        box-shadow: none !important;
-    }
-
-    .app-container {
-        max-width: 100%;
-        padding: 0;
-    }
-
-    .logo {
-        -webkit-text-fill-color: black;
-        border-bottom: 2px solid #000;
-        margin-bottom: 1rem;
-    }
-
-    #taskList {
-        display: none !important;
-    }
-
-    #printTable {
-        display: table !important;
-    }
-
-    .print-footer {
-        display: block !important;
-        margin-top: 30px;
-        page-break-inside: avoid;
-    }
-}
-
-.hidden {
-    display: none !important;
-}
+</html>
