@@ -74,10 +74,24 @@ function initDatabase() {
   if (!taskSheet) {
     taskSheet = ss.insertSheet(CONFIG.SHEET_NAME_TASKS);
     taskSheet.appendRow([
-      'task_id', 'date', 'title', 'notes', 'category', 'priority', 'status', 'order_index',
+      'task_id', 'date', 'title', 'objective', 'notes', 'category', 'priority', 'status', 'order_index',
       'created_at', 'updated_at', 'completed_at', 'postponed_to_date'
     ]);
     taskSheet.setFrozenRows(1);
+  } else {
+    // Migration: Check if 'objective' column exists, if not, add it
+    const headers = taskSheet.getRange(1, 1, 1, taskSheet.getLastColumn()).getValues()[0];
+    if (headers.indexOf('objective') === -1) {
+      // Insert 'objective' after 'title' (which is index 2, so column 4)
+      const titleIndex = headers.indexOf('title');
+      if (titleIndex > -1) {
+        taskSheet.insertColumnAfter(titleIndex + 1);
+        taskSheet.getRange(1, titleIndex + 2).setValue('objective');
+      } else {
+        // Fallback: append to end if title not found for some reason
+        taskSheet.getRange(1, taskSheet.getLastColumn() + 1).setValue('objective');
+      }
+    }
   }
 
   // Settings Sheet
@@ -106,21 +120,31 @@ function getTasks(dateStr) {
   initDatabase();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME_TASKS);
   const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return [];
+  
   const headers = data[0];
   const rows = data.slice(1);
   
   return rows
     .map(row => {
       let obj = {};
-      headers.forEach((h, i) => obj[h] = row[i]);
+      headers.forEach((h, i) => {
+        let val = row[i];
+        // Ensure date fields are returned as YYYY-MM-DD strings
+        if ((h === 'date' || h === 'postponed_to_date') && val instanceof Date) {
+          val = Utilities.formatDate(val, Session.getScriptTimeZone(), "yyyy-MM-dd");
+        } else if (val instanceof Date) {
+          val = val.toISOString();
+        }
+        obj[h] = val;
+      });
       return obj;
     })
     .filter(task => {
       // If dateStr is provided, filter by that date
       if (!dateStr) return true;
-      const taskDate = new Date(task.date);
-      const queryDate = new Date(dateStr);
-      return taskDate.toDateString() === queryDate.toDateString();
+      // Both should be in YYYY-MM-DD format now
+      return task.date === dateStr;
     })
     .sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
 }
@@ -128,13 +152,19 @@ function getTasks(dateStr) {
 function addTask(payload) {
   initDatabase();
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(CONFIG.SHEET_NAME_TASKS);
-  const taskId = 'T-' + new Date().getTime();
+  
+  // Use provided ID or generate one
+  const taskId = payload.task_id || ('T-' + new Date().getTime());
   const now = new Date().toISOString();
   
+  // Format date to string to prevent Sheet auto-formatting issues
+  const taskDate = payload.date || Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+
   const newRow = [
     taskId,
-    payload.date || new Date().toISOString().split('T')[0],
+    taskDate,
     payload.title,
+    payload.objective || '',
     payload.notes || '',
     payload.category || 'Personal',
     payload.priority || 3,
@@ -147,7 +177,7 @@ function addTask(payload) {
   ];
   
   sheet.appendRow(newRow);
-  return { task_id: taskId };
+  return { status: 'success', task_id: taskId };
 }
 
 function updateTask(payload) {
@@ -157,29 +187,40 @@ function updateTask(payload) {
   const headers = data[0];
   const taskIdIndex = headers.indexOf('task_id');
   
+  if (taskIdIndex === -1) throw new Error('task_id column not found');
+
   for (let i = 1; i < data.length; i++) {
-    if (data[i][taskIdIndex] === payload.task_id) {
+    if (data[i][taskIdIndex].toString() === payload.task_id.toString()) {
       const now = new Date().toISOString();
+      const rowNumber = i + 1;
       
-      // Update fields
+      // Update fields provided in payload
       Object.keys(payload).forEach(key => {
         const colIndex = headers.indexOf(key);
         if (colIndex > -1 && key !== 'task_id') {
-          sheet.getRange(i + 1, colIndex + 1).setValue(payload[key]);
+          let val = payload[key];
+          // Special handling for dates if needed, but strings are usually fine
+          sheet.getRange(rowNumber, colIndex + 1).setValue(val);
         }
       });
       
       // Automatic fields
-      sheet.getRange(i + 1, headers.indexOf('updated_at') + 1).setValue(now);
-      
-      if (payload.status === 'DONE') {
-        sheet.getRange(i + 1, headers.indexOf('completed_at') + 1).setValue(now);
+      const updatedAtIndex = headers.indexOf('updated_at');
+      if (updatedAtIndex > -1) {
+        sheet.getRange(rowNumber, updatedAtIndex + 1).setValue(now);
       }
       
-      return { success: true };
+      if (payload.status === 'DONE') {
+        const completedAtIndex = headers.indexOf('completed_at');
+        if (completedAtIndex > -1) {
+          sheet.getRange(rowNumber, completedAtIndex + 1).setValue(now);
+        }
+      }
+      
+      return { status: 'success' };
     }
   }
-  throw new Error('Task not found');
+  throw new Error('Task not found with ID: ' + payload.task_id);
 }
 
 function deleteTask(taskId) {
